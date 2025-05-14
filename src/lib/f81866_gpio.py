@@ -1,5 +1,3 @@
-import os
-import ctypes
 import lib.f81866 as f81866
 
 F81866_CFG_GPIO = 0x06
