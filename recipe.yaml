@@ -1,0 +1,45 @@
+---
+RecipeFormatVersion: "2020-01-25"
+ComponentName: "{COMPONENT_NAME}"
+ComponentVersion: "{COMPONENT_VERSION}"
+ComponentDescription: "A GPIO control module for devices with Fintek F8196x-F8186x DIO running AWS Greengrass in the imPHM platform."
+ComponentPublisher: "{COMPONENT_AUTHOR}"
+ComponentConfiguration:
+  DefaultConfiguration:
+    LogLevel: "INFO"
+    ShadowName: "imPHMGPIOState"
+    accessControl:
+      aws.greengrass.ShadowManager:
+        imcloud.imphm.gpio.DIO_Fintek_F8196x_F8186x:shadow:1:
+          policyDescription: "Allow updating DIOStatus shadow"
+          operations:
+            - "aws.greengrass#UpdateThingShadow"
+          resources:
+            # - $aws/things/{iot:thingName}/shadow/name/imPHMGPIOState #FIXME - This is not working, so temporarily using hardcoded thing name
+            - $aws/things/MDI-Dev/shadow/name/imPHMGPIOState
+      aws.greengrass.ipc.pubsub:
+        imcloud.imphm.gpio.DIO_Fintek_F8196x_F8186x:pubsub:1:
+          policyDescription: "Allow publishing to imcloud/imphm/gpio/DIO_Fintek_F8196x_F8186x topic"
+          operations:
+            - aws.greengrass#SubscribeToTopic
+            - aws.greengrass#PublishToTopic
+          resources:
+            # - $aws/things/{iot:thingName}/shadow/name/imPHMGPIOState/get/accepted #FIXME - This is not working, so temporarily using hardcoded thing name
+            # - $aws/things/{iot:thingName}/shadow/name/imPHMGPIOState/update #FIXME - This is not working, so temporarily using hardcoded thing name
+            - $aws/things/MDI-Dev/shadow/name/imPHMGPIOState/get/accepted
+            - $aws/things/MDI-Dev/shadow/name/imPHMGPIOState/update
+Manifests:
+  - Platform:
+      os: all
+    Artifacts:
+      - Uri: "s3://BUCKET_NAME/COMPONENT_NAME/COMPONENT_VERSION/imphm-aws_ggc-gpio-DIO_Fintek_F8196x_F8186x.zip"
+        Unarchive: ZIP
+    RunWith:
+      posixUser: "root:root"
+    Lifecycle:
+      install: 
+        Script: "python3 -m pip install -r {artifacts:decompressedPath}/imphm-aws_ggc-gpio-DIO_Fintek_F8196x_F8186x/requirements.txt"
+        RequiresPrivilege: true
+      run: 
+        Script: "python3 -u {artifacts:decompressedPath}/imphm-aws_ggc-gpio-DIO_Fintek_F8196x_F8186x/src/main.py  --thing-name {iot:thingName} --shadow-name {configuration:/ShadowName} --log-level {configuration:/LogLevel}"
+        RequiresPrivilege: true
